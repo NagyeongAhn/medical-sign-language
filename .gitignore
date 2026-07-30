@@ -1,1 +1,25 @@
 .venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Backend
+backend/.gradle/
+backend/build/
+application-local.yml
+
+# Local media storage
+uploads/*
+!uploads/.gitkeep
+*.mp4
+*.mov
+*.webm
+
+# IDE / OS
+.DS_Store
+.idea/
+*.iml
+.vscode/

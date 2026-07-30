@@ -1,7 +1,6 @@
 import cv2
 import mediapipe as mp
 import time
-import math
 
 # MediaPipe의 손 인식 모듈 초기화
 mp_hands = mp.solutions.hands
