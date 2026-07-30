@@ -26,4 +26,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiErrorResponse.of(500, "STORAGE_ERROR", exception.getMessage()));
     }
+
+    @ExceptionHandler(VideoNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleVideoNotFound(VideoNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.of(404, "VIDEO_NOT_FOUND", exception.getMessage()));
+    }
 }

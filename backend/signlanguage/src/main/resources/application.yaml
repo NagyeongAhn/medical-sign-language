@@ -15,6 +15,9 @@ spring:
       max-request-size: 500MB
 
 app:
+  media:
+    ffprobe-command: ${FFPROBE_COMMAND:ffprobe}
+    probe-timeout-seconds: 10
   storage:
     upload-dir: ${UPLOAD_DIR:../../uploads}
     max-file-size: 524288000

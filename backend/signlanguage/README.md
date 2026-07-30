@@ -6,6 +6,7 @@
 
 - Java 21
 - MySQL 8
+- FFmpeg 8 (`ffprobe`)
 
 ## 데이터베이스 준비
 
@@ -55,3 +56,9 @@ curl -X POST http://localhost:8080/api/videos \
 ```
 
 성공하면 HTTP `201 Created`와 저장된 메타데이터가 반환된다. 실제 파일은 UUID 파일명으로 `uploads/`에 저장된다.
+
+업로드 시 `ffprobe`로 재생시간을 확인해 `durationMs`에 저장한다. 저장된 영상 메타데이터는 다음 API로 조회할 수 있다.
+
+```bash
+curl http://localhost:8080/api/videos/1
+```

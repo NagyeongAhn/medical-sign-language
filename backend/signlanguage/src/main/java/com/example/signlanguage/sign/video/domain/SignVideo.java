@@ -55,13 +55,15 @@ public class SignVideo {
             String storedFilename,
             String storageUrl,
             String contentType,
-            long fileSize
+            long fileSize,
+            long durationMs
     ) {
         this.originalFilename = originalFilename;
         this.storedFilename = storedFilename;
         this.storageUrl = storageUrl;
         this.contentType = contentType;
         this.fileSize = fileSize;
+        this.durationMs = durationMs;
         this.processingStatus = ProcessingStatus.UPLOADED;
         this.uploadedAt = LocalDateTime.now();
         this.updatedAt = this.uploadedAt;
@@ -72,9 +74,10 @@ public class SignVideo {
             String storedFilename,
             String storageUrl,
             String contentType,
-            long fileSize
+            long fileSize,
+            long durationMs
     ) {
-        return new SignVideo(originalFilename, storedFilename, storageUrl, contentType, fileSize);
+        return new SignVideo(originalFilename, storedFilename, storageUrl, contentType, fileSize, durationMs);
     }
 
     public Long getId() {

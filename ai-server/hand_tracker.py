@@ -6,9 +6,9 @@ import time
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-# 손 인식 모델 설정 (최대 1개의 손만 인식, 최소 신뢰도 70%)
+# 손 인식 모델 설정 (최대 2개의 손을 동시에 인식, 최소 신뢰도 70%)
 hands = mp_hands.Hands(
-    max_num_hands=1,
+    max_num_hands=2,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7
 )
@@ -25,6 +25,7 @@ last_recorded_time = time.time()
 current_sign_text = "카메라에 손을 보여주세요"
 
 print("의료 수어-텍스트 변환 시연을 시작합니다.")
+print("양손을 동시에 카메라에 보여줄 수 있습니다.")
 print("1. 검지만 펴기 = '병원' | 2. 주먹 쥐기 = '아프다' | 3. 손바닥 다 펴기 = '정상'")
 print("종료하려면 웹캠 창을 클릭한 후 'q'를 누르세요.")
 
@@ -46,26 +47,56 @@ while cap.isOpened():
 
     # 손이 인식되었을 때 실행
     if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            # 1. 화면에는 프레임 드랍 없이 손가락 마디와 선을 실시간으로 부드럽게 그려주기
+        detected_hands = []
+
+        # 손 좌표와 MediaPipe가 판별한 좌우 정보를 같은 순서로 묶습니다.
+        for hand_landmarks, handedness in zip(
+            results.multi_hand_landmarks,
+            results.multi_handedness
+        ):
+            classification = handedness.classification[0]
+            hand_label = classification.label.upper()
+            hand_score = classification.score
+            detected_hands.append((hand_label, hand_score, hand_landmarks))
+
+        # 화면과 로그에서 항상 LEFT 다음 RIGHT 순서로 보이도록 정렬합니다.
+        detected_hands.sort(key=lambda hand: 0 if hand[0] == "LEFT" else 1)
+
+        # 인식된 모든 손의 관절, 연결선, 좌우 라벨을 매 프레임 표시합니다.
+        image_height, image_width, _ = image.shape
+        for hand_label, hand_score, hand_landmarks in detected_hands:
             mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-            
-            # 2. 설정한 초 간격(INTERVAL)이 지났는지 타이밍 확인하기
-            if current_time - last_recorded_time >= INTERVAL:
-                
+
+            wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+            label_x = max(0, int(wrist.x * image_width) - 35)
+            label_y = max(30, int(wrist.y * image_height) + 30)
+            cv2.putText(
+                image,
+                f"{hand_label} {hand_score:.2f}",
+                (label_x, label_y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA
+            )
+
+        # 설정한 초 간격(INTERVAL)이 지나면 인식된 두 손을 같은 분석 주기에서 처리합니다.
+        if current_time - last_recorded_time >= INTERVAL:
+            detected_signs = []
+
+            for hand_label, hand_score, hand_landmarks in detected_hands:
                 # [알고리즘] 주요 손가락 끝(Tip)과 바로 아래 마디(PIP) 위치 추출
                 # MediaPipe의 Y좌표는 위로 갈수록 0에 가깝고(작고), 아래로 갈수록 1에 가깝습니다(큼).
-                thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
-                
                 index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 index_pip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP]
-                
+
                 middle_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
                 middle_pip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP]
-                
+
                 ring_tip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP]
                 ring_pip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP]
-                
+
                 pinky_tip = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP]
                 pinky_pip = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP]
 
@@ -77,24 +108,24 @@ while cap.isOpened():
 
                 # 규칙 매핑 조건문 (가짜 백엔드 로직)
                 if index_open and not middle_open and not ring_open and not pinky_open:
-                    current_sign_text = "병원 (Hospital)"
+                    sign_text = "Hospital"
                 elif not index_open and not middle_open and not ring_open and not pinky_open:
-                    current_sign_text = "아프다 (Sick)"
+                    sign_text = "Sick"
                 elif index_open and middle_open and ring_open and pinky_open:
-                    current_sign_text = "정상 (Normal)"
+                    sign_text = "Normal"
                 else:
-                    current_sign_text = "분석 중..."
+                    sign_text = "Analyzing"
 
-                # 콘솔창에 정해진 시간 간격마다 변환 단어 출력
-                print(f"[수어 변환 결과] -> {current_sign_text}")
-                
-                # 기준이 되는 마지막 기록 시간을 현재 시간으로 리셋
-                last_recorded_time = current_time
+                detected_signs.append(f"{hand_label}: {sign_text}")
+
+            current_sign_text = " | ".join(detected_signs)
+            print(f"[수어 변환 결과] 인식된 손 {len(detected_signs)}개 -> {current_sign_text}")
+            last_recorded_time = current_time
     else:
         current_sign_text = "손을 인식하지 못했습니다."
 
     # 웹캠 화면 왼쪽 위에 결과 텍스트 띄우기 (가독성을 위한 배경 상자 포함)
-    cv2.rectangle(image, (20, 20), (420, 80), (0, 0, 0), -1)
+    cv2.rectangle(image, (20, 20), (760, 80), (0, 0, 0), -1)
     cv2.putText(image, current_sign_text, (30, 60), 
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
 
@@ -107,4 +138,5 @@ while cap.isOpened():
 
 # 메모리 해제 및 창 닫기
 cap.release()
+hands.close()
 cv2.destroyAllWindows()
