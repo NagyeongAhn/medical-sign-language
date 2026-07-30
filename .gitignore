@@ -10,6 +10,9 @@ __pycache__/
 backend/.gradle/
 backend/build/
 application-local.yml
+application-local.yaml
+application-secret.yml
+application-secret.yaml
 
 # Local media storage
 uploads/*

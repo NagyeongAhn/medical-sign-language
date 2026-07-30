@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: signlanguage
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/signlanguage?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:signlanguage}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+app:
+  storage:
+    upload-dir: ${UPLOAD_DIR:../../uploads}
+    max-file-size: 524288000
+    allowed-extensions:
+      - mp4
+      - mov
+      - webm
+    allowed-content-types:
+      - video/mp4
+      - video/quicktime
+      - video/webm
