@@ -5,6 +5,7 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+ai-server/.cache/
 
 # Backend
 backend/.gradle/

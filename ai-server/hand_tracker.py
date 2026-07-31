@@ -1,142 +1,180 @@
-import cv2
-import mediapipe as mp
 import time
+from pathlib import Path
 
-# MediaPipe의 손 인식 모듈 초기화
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
+import cv2
 
-# 손 인식 모델 설정 (최대 2개의 손을 동시에 인식, 최소 신뢰도 70%)
-hands = mp_hands.Hands(
-    max_num_hands=2,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7
-)
+from comparison.sign_matcher import SignMatcher
+from models.frame_data import build_frame_data
+from services.recording_service import RecordingService, WORD_DEFINITIONS
+from trackers.face_tracker import FaceTracker
+from trackers.hand_tracker import HandTracker
+from trackers.pose_tracker import PoseTracker
 
-# 맥북 내장 웹캠 켜기 (0번 또는 맥북 전면 카메라 매칭)
-cap = cv2.VideoCapture(0)
 
-# 좌표 및 단어를 분석할 시간 간격 (단위: 초)
-# 0.5초에 한 번씩 손모양을 분석해 단어를 매칭합니다.
-INTERVAL = 0.5
-last_recorded_time = time.time()
+def main():
+    hand_tracker = HandTracker()
+    pose_tracker = PoseTracker()
+    face_tracker = FaceTracker()
+    recordings_directory = Path(__file__).parent / "recordings"
+    recording_service = RecordingService(recordings_directory)
+    sign_matcher = SignMatcher(recordings_directory)
+    reference_count = sign_matcher.load_references()
+    cap = cv2.VideoCapture(0)
 
-# 변환된 수어 텍스트를 저장할 변수 (화면 및 로그 표시용)
-current_sign_text = "카메라에 손을 보여주세요"
+    recording_started_at = time.time()
+    frame_index = 0
+    current_sign_text = "SHOW YOUR HANDS"
+    analysis_result_text = ""
 
-print("의료 수어-텍스트 변환 시연을 시작합니다.")
-print("양손을 동시에 카메라에 보여줄 수 있습니다.")
-print("1. 검지만 펴기 = '병원' | 2. 주먹 쥐기 = '아프다' | 3. 손바닥 다 펴기 = '정상'")
-print("종료하려면 웹캠 창을 클릭한 후 'q'를 누르세요.")
+    print("의료 수어-텍스트 변환 시연을 시작합니다.")
+    print(f"기준 수어 샘플 {reference_count}개를 불러왔습니다.")
+    for skipped in sign_matcher.skipped_references:
+        print(
+            f'[기준 샘플 제외] {skipped["path"].name}: '
+            f'{skipped["reason"]}'
+        )
+    print("양손과 상체, 얼굴 핵심 좌표를 인식합니다.")
+    word_menu = " | ".join(
+        f'{key}: {word["wordLabel"]}'
+        for key, word in WORD_DEFINITIONS.items()
+    )
+    print(word_menu)
+    print("숫자 키로 촬영 시작 | Space: 촬영 종료 및 JSON 저장")
+    print("R: 테스트 촬영 시작 | Space: 촬영 종료 및 즉시 분석")
+    print("종료하려면 웹캠 창을 클릭한 후 'q'를 누르세요.")
 
-while cap.isOpened():
-    success, image = cap.read()
-    if not success:
-        print("웹캠 입력을 가져올 수 없습니다. (맥북 카메라 권한을 확인하세요)")
-        break
+    try:
+        while cap.isOpened():
+            success, image = cap.read()
+            if not success:
+                print("웹캠 입력을 가져올 수 없습니다. (카메라 권한을 확인하세요)")
+                break
 
-    # 이미지 거울 반전 및 BGR에서 RGB로 변환 (MediaPipe는 RGB를 사용함)
-    image = cv2.flip(image, 1)
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # AI 모델에 이미지를 넣어 손가락 좌표 결과 처리
-    results = hands.process(image_rgb)
+            image = cv2.flip(image, 1)
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            current_time = time.time()
 
-    # 루프가 돌 때마다 현재 시간을 계산
-    current_time = time.time()
+            detected_hands = hand_tracker.process(image_rgb)
+            hand_coordinates = hand_tracker.coordinates(detected_hands)
+            upper_body_coordinates = pose_tracker.process(image_rgb)
+            face_coordinates = face_tracker.process(image_rgb)
 
-    # 손이 인식되었을 때 실행
-    if results.multi_hand_landmarks:
-        detected_hands = []
+            frame_data = build_frame_data(
+                frame_index=frame_index,
+                timestamp_ms=round((current_time - recording_started_at) * 1000),
+                hands=hand_coordinates,
+                upper_body=upper_body_coordinates,
+                face=face_coordinates,
+            )
+            frame_index += 1
+            recording_service.add_frame(frame_data)
 
-        # 손 좌표와 MediaPipe가 판별한 좌우 정보를 같은 순서로 묶습니다.
-        for hand_landmarks, handedness in zip(
-            results.multi_hand_landmarks,
-            results.multi_handedness
-        ):
-            classification = handedness.classification[0]
-            hand_label = classification.label.upper()
-            hand_score = classification.score
-            detected_hands.append((hand_label, hand_score, hand_landmarks))
+            hand_tracker.draw(image, detected_hands)
+            pose_tracker.draw(image, upper_body_coordinates)
+            face_tracker.draw(image, face_coordinates)
 
-        # 화면과 로그에서 항상 LEFT 다음 RIGHT 순서로 보이도록 정렬합니다.
-        detected_hands.sort(key=lambda hand: 0 if hand[0] == "LEFT" else 1)
+            if detected_hands:
+                detected_labels = ", ".join(
+                    hand["label"]
+                    for hand in detected_hands
+                )
+                current_sign_text = f"HANDS: {detected_labels}"
+            else:
+                current_sign_text = "NO HANDS DETECTED"
 
-        # 인식된 모든 손의 관절, 연결선, 좌우 라벨을 매 프레임 표시합니다.
-        image_height, image_width, _ = image.shape
-        for hand_label, hand_score, hand_landmarks in detected_hands:
-            mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-
-            wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-            label_x = max(0, int(wrist.x * image_width) - 35)
-            label_y = max(30, int(wrist.y * image_height) + 30)
+            cv2.rectangle(image, (20, 20), (760, 80), (0, 0, 0), -1)
             cv2.putText(
                 image,
-                f"{hand_label} {hand_score:.2f}",
-                (label_x, label_y),
+                current_sign_text,
+                (30, 60),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 255, 0),
+                0.8,
+                (0, 255, 255),
                 2,
-                cv2.LINE_AA
+                cv2.LINE_AA,
             )
 
-        # 설정한 초 간격(INTERVAL)이 지나면 인식된 두 손을 같은 분석 주기에서 처리합니다.
-        if current_time - last_recorded_time >= INTERVAL:
-            detected_signs = []
-
-            for hand_label, hand_score, hand_landmarks in detected_hands:
-                # [알고리즘] 주요 손가락 끝(Tip)과 바로 아래 마디(PIP) 위치 추출
-                # MediaPipe의 Y좌표는 위로 갈수록 0에 가깝고(작고), 아래로 갈수록 1에 가깝습니다(큼).
-                index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                index_pip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP]
-
-                middle_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
-                middle_pip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP]
-
-                ring_tip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP]
-                ring_pip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP]
-
-                pinky_tip = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP]
-                pinky_pip = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP]
-
-                # 손가락이 펴졌는지 여부 체크 (끝마디 Y가 아래마디 Y보다 작으면 위로 펴진 상태)
-                index_open = index_tip.y < index_pip.y
-                middle_open = middle_tip.y < middle_pip.y
-                ring_open = ring_tip.y < ring_pip.y
-                pinky_open = pinky_tip.y < pinky_pip.y
-
-                # 규칙 매핑 조건문 (가짜 백엔드 로직)
-                if index_open and not middle_open and not ring_open and not pinky_open:
-                    sign_text = "Hospital"
-                elif not index_open and not middle_open and not ring_open and not pinky_open:
-                    sign_text = "Sick"
-                elif index_open and middle_open and ring_open and pinky_open:
-                    sign_text = "Normal"
+            if recording_service.is_recording:
+                if recording_service.is_test_recording:
+                    recording_label = "TEST"
                 else:
-                    sign_text = "Analyzing"
+                    recording_label = recording_service.active_word["wordId"].upper()
+                cv2.putText(
+                    image,
+                    f"REC: {recording_label} | SPACE TO FINISH",
+                    (30, 110),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 0, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+            elif analysis_result_text:
+                cv2.putText(
+                    image,
+                    analysis_result_text,
+                    (30, 110),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 165, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
 
-                detected_signs.append(f"{hand_label}: {sign_text}")
+            cv2.imshow("MediaPipe Sign Tracker", image)
 
-            current_sign_text = " | ".join(detected_signs)
-            print(f"[수어 변환 결과] 인식된 손 {len(detected_signs)}개 -> {current_sign_text}")
-            last_recorded_time = current_time
-    else:
-        current_sign_text = "손을 인식하지 못했습니다."
+            key = cv2.waitKey(5) & 0xFF
+            key_character = chr(key) if key != 255 else ""
 
-    # 웹캠 화면 왼쪽 위에 결과 텍스트 띄우기 (가독성을 위한 배경 상자 포함)
-    cv2.rectangle(image, (20, 20), (760, 80), (0, 0, 0), -1)
-    cv2.putText(image, current_sign_text, (30, 60), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+            if key_character in WORD_DEFINITIONS:
+                if recording_service.start(key_character):
+                    word = WORD_DEFINITIONS[key_character]
+                    analysis_result_text = ""
+                    print(f'[촬영 시작] {word["wordLabel"]} ({word["wordId"]})')
+                else:
+                    print("[안내] 진행 중인 촬영을 Space로 먼저 저장하세요.")
+            elif key_character.lower() == "r":
+                if recording_service.start_test():
+                    analysis_result_text = ""
+                    print("[테스트 촬영 시작] 수어를 한 뒤 Space를 누르세요.")
+                else:
+                    print("[안내] 진행 중인 촬영을 Space로 먼저 종료하세요.")
+            elif key == 32:
+                if recording_service.is_test_recording:
+                    test_recording = recording_service.stop_test()
+                    if test_recording:
+                        try:
+                            result = sign_matcher.match_recording(test_recording)
+                            result_id = result["wordId"] or "unknown"
+                            analysis_result_text = (
+                                f'RESULT: {result_id.upper()} | '
+                                f'{result["confidence"]:.1%}'
+                            )
+                            print(
+                                f'[분석 결과] {result["wordLabel"]} | '
+                                f'거리: {result["distance"]:.4f} | '
+                                f'유사도: {result["confidence"]:.1%}'
+                            )
+                        except ValueError as error:
+                            analysis_result_text = "RESULT: ANALYSIS FAILED"
+                            print(f"[분석 실패] {error}")
+                    else:
+                        print("[안내] 분석할 테스트 프레임이 없습니다.")
+                else:
+                    saved_path = recording_service.stop_and_save()
+                    if saved_path:
+                        print(f"[저장 완료] {saved_path}")
+                    else:
+                        print("[안내] 저장할 촬영 데이터가 없습니다.")
+            elif key_character.lower() == "q":
+                break
+    finally:
+        cap.release()
+        hand_tracker.close()
+        pose_tracker.close()
+        face_tracker.close()
+        cv2.destroyAllWindows()
 
-    # 화면에 카메라 영상 띄우기
-    cv2.imshow('MediaPipe Hand Test', image)
 
-    # 'q' 키를 누르면 프로그램 종료
-    if cv2.waitKey(5) & 0xFF == ord('q'):
-        break
-
-# 메모리 해제 및 창 닫기
-cap.release()
-hands.close()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
