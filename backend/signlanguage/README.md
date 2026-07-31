@@ -22,11 +22,12 @@ GRANT ALL PRIVILEGES ON signlanguage.* TO 'signlanguage'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-비밀번호는 Git에 저장하지 않고 실행 환경변수로 전달한다.
+비밀번호와 Gemini API 키는 Git에 저장하지 않고 실행 환경변수로 전달한다.
 
 ```bash
 export DB_USERNAME=signlanguage
 export DB_PASSWORD='변경할-비밀번호'
+export GEMINI_API_KEY='Google-AI-Studio에서-발급한-키'
 ```
 
 필요하면 접속 URL과 영상 저장 경로도 변경할 수 있다.
@@ -43,7 +44,20 @@ export UPLOAD_DIR='../../uploads'
 ./gradlew bootRun
 ```
 
-애플리케이션이 시작될 때 Flyway가 `sign_video` 테이블을 생성한다.
+애플리케이션이 시작될 때 Flyway가 다음 테이블을 생성한다.
+
+- `sign_video`: 업로드 영상 메타데이터
+- `sign_word`: 수어 단어 ID, 한글 라벨, 의미 분류와 촬영 키
+- `translation_session`: 번역 요청과 생성 문장
+- `recognized_word`: 번역 요청에 포함된 인식 단어 순서
+
+활성화된 단어 사전은 다음 API로 조회한다.
+
+```bash
+curl http://localhost:8080/api/sign-words
+```
+
+Python 분석 서버는 시작할 때 이 API에서 단어 목록을 동기화한다.
 
 ## 영상 업로드
 
@@ -61,4 +75,35 @@ curl -X POST http://localhost:8080/api/videos \
 
 ```bash
 curl http://localhost:8080/api/videos/1
+```
+
+## 번역 세션 생성
+
+인식된 단어는 1개 이상 5개 이하로 전달한다. Gemini API가 단어 목록을
+환자의 자연스러운 한국어 문장으로 변환한다. 생성에 성공하면 문장과
+`COMPLETED` 상태를, API 호출에 실패하면 `FAILED` 상태를 저장한다.
+
+```bash
+curl -X POST http://localhost:8080/api/translations \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "words": [
+      {
+        "wordId": "sick",
+        "wordLabel": "아프다",
+        "confidence": 0.83
+      },
+      {
+        "wordId": "hospital",
+        "wordLabel": "병원",
+        "confidence": 0.82
+      }
+    ]
+  }'
+```
+
+생성된 세션은 다음 API로 조회한다.
+
+```bash
+curl http://localhost:8080/api/translations/1
 ```

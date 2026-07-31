@@ -32,4 +32,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiErrorResponse.of(404, "VIDEO_NOT_FOUND", exception.getMessage()));
     }
+
+    @ExceptionHandler(InvalidTranslationException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidTranslation(InvalidTranslationException exception) {
+        return ResponseEntity.badRequest()
+                .body(ApiErrorResponse.of(400, "INVALID_TRANSLATION", exception.getMessage()));
+    }
+
+    @ExceptionHandler(TranslationNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleTranslationNotFound(TranslationNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.of(404, "TRANSLATION_NOT_FOUND", exception.getMessage()));
+    }
 }
