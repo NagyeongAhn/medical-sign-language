@@ -116,20 +116,12 @@ function App() {
       setTranslationError('')
       if (mode === 'sequence') {
         const recognizedWords = data.words.filter((word) => word.wordId)
-        const averageConfidence =
-          recognizedWords.length > 0
-            ? recognizedWords.reduce(
-                (sum, word) => sum + word.confidence,
-                0,
-              ) / recognizedWords.length
-            : 0
 
         setResult({
           wordId: recognizedWords.length > 0 ? 'sequence' : null,
           wordLabel:
             recognizedWords.map((word) => word.wordLabel).join(' · ') ||
             '인식할 수 없음',
-          confidence: averageConfidence,
           isSequence: true,
         })
         setWords((currentWords) => {
@@ -477,17 +469,6 @@ function App() {
                     >
                       {result.wordLabel}
                     </strong>
-                    <div className="confidence-row">
-                      <span>유사도</span>
-                      <strong>{(result.confidence * 100).toFixed(1)}%</strong>
-                    </div>
-                    <div className="confidence-track">
-                      <span
-                        style={{
-                          width: `${Math.min(result.confidence * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
                     <button
                       className="text-button"
                       type="button"

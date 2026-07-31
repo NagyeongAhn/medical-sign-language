@@ -429,19 +429,6 @@ main {
 .result-word { color: var(--ink); font-size: 34px; letter-spacing: -0.055em; }
 .result-word.is-sequence { font-size: 24px; line-height: 1.45; letter-spacing: -0.04em; }
 
-.confidence-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 25px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.confidence-row strong { color: var(--ink); font-size: 13px; }
-.confidence-track { height: 7px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: rgba(13, 109, 104, 0.12); }
-.confidence-track span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, var(--primary), #65c9b8); animation: grow 500ms ease-out; }
-
 .text-button {
   align-self: flex-start;
   margin-top: 18px;
