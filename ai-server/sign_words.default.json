@@ -1,0 +1,7 @@
+[
+  {"recordingKey": "1", "wordId": "hospital", "wordLabel": "병원"},
+  {"recordingKey": "2", "wordId": "sick", "wordLabel": "아프다"},
+  {"recordingKey": "3", "wordId": "medicine", "wordLabel": "약"},
+  {"recordingKey": "4", "wordId": "doctor", "wordLabel": "의사"},
+  {"recordingKey": "5", "wordId": "help", "wordLabel": "도와주세요"}
+]

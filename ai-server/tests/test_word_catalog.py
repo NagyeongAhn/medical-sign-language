@@ -7,7 +7,7 @@ AI_SERVER_DIRECTORY = Path(__file__).resolve().parents[1]
 if str(AI_SERVER_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(AI_SERVER_DIRECTORY))
 
-from services.word_catalog import _to_definitions
+from services.word_catalog import _load_default_words, _to_definitions
 
 
 class WordCatalogTest(unittest.TestCase):
@@ -55,6 +55,15 @@ class WordCatalogTest(unittest.TestCase):
                     },
                 ]
             )
+
+    def test_default_words_file_is_valid(self):
+        definitions = _load_default_words()
+
+        self.assertIn("hospital", [word["wordId"] for word in definitions.values()])
+        self.assertEqual(
+            len({word["wordId"] for word in definitions.values()}),
+            len(definitions),
+        )
 
 
 if __name__ == "__main__":

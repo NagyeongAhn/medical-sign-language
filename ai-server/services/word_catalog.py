@@ -5,17 +5,9 @@ from pathlib import Path
 import httpx
 
 
-DEFAULT_WORD_DEFINITIONS = {
-    "1": {"wordId": "hospital", "wordLabel": "병원"},
-    "2": {"wordId": "sick", "wordLabel": "아프다"},
-    "3": {"wordId": "medicine", "wordLabel": "약"},
-    "4": {"wordId": "doctor", "wordLabel": "의사"},
-    "5": {"wordId": "help", "wordLabel": "도와주세요"},
-    "6": {"wordId": "head", "wordLabel": "머리"},
-}
-
 DEFAULT_SIGN_WORD_API_URL = "http://localhost:8080/api/sign-words"
 CACHE_PATH = Path(__file__).resolve().parents[1] / ".cache" / "sign_words.json"
+DEFAULT_WORDS_PATH = Path(__file__).resolve().parents[1] / "sign_words.default.json"
 
 
 def load_word_definitions():
@@ -41,12 +33,23 @@ def load_word_definitions():
             )
             return cached_definitions
 
+        default_definitions = _load_default_words()
         print(
             "[단어 사전] Spring Boot에 연결하지 못해 "
-            f"기본 목록 {len(DEFAULT_WORD_DEFINITIONS)}개를 사용합니다. "
+            f"기본 목록 {len(default_definitions)}개를 사용합니다. "
             f"({error})"
         )
-        return dict(DEFAULT_WORD_DEFINITIONS)
+        return default_definitions
+
+
+def _load_default_words():
+    try:
+        with DEFAULT_WORDS_PATH.open(encoding="utf-8") as file:
+            return _to_definitions(json.load(file))
+    except (OSError, ValueError) as error:
+        raise RuntimeError(
+            f"기본 단어 목록({DEFAULT_WORDS_PATH.name})을 읽을 수 없습니다: {error}"
+        ) from error
 
 
 def _to_definitions(words):
