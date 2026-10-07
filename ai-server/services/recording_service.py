@@ -1,6 +1,10 @@
 import json
+import os
+import re
 from copy import deepcopy
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from services.word_catalog import load_word_definitions
 
@@ -9,8 +13,11 @@ WORD_DEFINITIONS = load_word_definitions()
 
 
 class RecordingService:
-    def __init__(self, recordings_directory):
+    def __init__(self, recordings_directory, signer_id=None):
         self.recordings_directory = Path(recordings_directory)
+        self.signer_id = signer_id or os.getenv("SIGNER_ID") or f"anon_{uuid4().hex[:8]}"
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,32}", self.signer_id):
+            raise ValueError("SIGNER_ID는 영문, 숫자, 밑줄, 하이픈으로 된 1~32자여야 합니다.")
         self.active_word = None
         self.test_mode = False
         self.frames = []
@@ -66,19 +73,21 @@ class RecordingService:
         word_directory = self.recordings_directory / word_id
         word_directory.mkdir(parents=True, exist_ok=True)
 
-        sample_number = self._next_sample_number(word_directory)
-        sample_id = f"{word_id}_{sample_number:03d}"
-        output_path = word_directory / f"sample_{sample_number:03d}.json"
+        unique_id = uuid4().hex
+        sample_id = f"{word_id}_{self.signer_id}_{unique_id}"
+        output_path = word_directory / f"sample_{self.signer_id}_{unique_id}.json"
         recording_data = {
             "wordId": word_id,
             "wordLabel": self.active_word["wordLabel"],
             "sampleId": sample_id,
+            "signerId": self.signer_id,
+            "capturedAtUtc": datetime.now(timezone.utc).isoformat(),
             "durationMs": self.frames[-1]["timestampMs"],
             "frameCount": len(self.frames),
             "frames": self.frames,
         }
 
-        with output_path.open("w", encoding="utf-8") as file:
+        with output_path.open("x", encoding="utf-8") as file:
             json.dump(recording_data, file, ensure_ascii=False, indent=2)
 
         self._reset()
@@ -102,16 +111,6 @@ class RecordingService:
         }
         self._reset()
         return recording_data
-
-    @staticmethod
-    def _next_sample_number(word_directory):
-        numbers = []
-        for path in word_directory.glob("sample_*.json"):
-            try:
-                numbers.append(int(path.stem.split("_")[-1]))
-            except ValueError:
-                continue
-        return max(numbers, default=0) + 1
 
     def _reset(self):
         self.active_word = None

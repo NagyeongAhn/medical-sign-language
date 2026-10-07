@@ -1,18 +1,20 @@
 :root {
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
-  color: #274440;
-  background: #f4f7f5;
+  color: #1e3555;
+  background: #fff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --ink: #153632;
-  --muted: #6e8380;
-  --primary: #0d6d68;
-  --soft-primary: #e5f3f0;
-  --line: #dfe9e6;
-  --card: rgba(255, 255, 255, 0.92);
+  --ink: #172b4d;
+  --muted: #6b7f99;
+  --primary: #3b82f6;
+  --soft-primary: #eef6ff;
+  --accent-blue-soft: #dcebff;
+  --accent-blue: #b8d8ff;
+  --line: #dfeaf7;
+  --card: rgba(255, 255, 255, 0.96);
   --radius-lg: 26px;
-  --card-shadow: 0 18px 50px rgba(30, 70, 65, 0.07);
+  --card-shadow: 0 18px 50px rgba(47, 128, 184, 0.09);
 }
 
 * { box-sizing: border-box; }
@@ -20,24 +22,21 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: #f4f7f5;
+  background: #fff;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(118, 196, 183, 0.11), transparent 24rem),
-    radial-gradient(circle at 92% 4%, rgba(229, 192, 127, 0.1), transparent 22rem),
-    #f4f7f5;
+  background: #fff;
 }
 
 button, input { font: inherit; }
 button { cursor: pointer; }
 
 button:focus-visible, a:focus-visible {
-  outline: 3px solid rgba(13, 109, 104, 0.26);
+  outline: 3px solid rgba(47, 128, 184, 0.28);
   outline-offset: 3px;
 }
 

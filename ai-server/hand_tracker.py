@@ -28,6 +28,7 @@ def main():
 
     print("의료 수어-텍스트 변환 시연을 시작합니다.")
     print(f"기준 수어 샘플 {reference_count}개를 불러왔습니다.")
+    print(f"촬영자 코드: {recording_service.signer_id}")
     for skipped in sign_matcher.skipped_references:
         print(
             f'[기준 샘플 제외] {skipped["path"].name}: '

@@ -28,7 +28,7 @@ class VideoAnalysisService:
         segments = segment_by_motion(frames)
         if not segments:
             raise ValueError(
-                "단어 구간을 찾지 못했습니다. 단어 사이에 약 0.8초 멈춰주세요."
+                "단어 구간을 찾지 못했습니다. 단어 사이에 손을 약 1.5초 멈춰주세요."
             )
 
         words = []
@@ -53,7 +53,7 @@ class VideoAnalysisService:
 
         return {
             "words": words,
-            "segmentCount": len(words),
+            "segmentCount": len(segments),
             "frameCount": len(frames),
         }
 
