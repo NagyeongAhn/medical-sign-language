@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.schemas import (
     AnalysisResponse,
     HealthResponse,
-    SequenceAnalysisResponse,
     WordResponse,
     WordsResponse,
 )
@@ -60,22 +59,12 @@ def get_words():
 
 
 @app.post("/api/sign/analyze", response_model=AnalysisResponse)
+@app.post("/api/sign/analyze-sequence", response_model=AnalysisResponse, include_in_schema=False)
 async def analyze_sign(video: UploadFile = File(...)):
-    return await _handle_video_upload(video, video_analysis_service.analyze)
+    return await _handle_video_upload(video)
 
 
-@app.post(
-    "/api/sign/analyze-sequence",
-    response_model=SequenceAnalysisResponse,
-)
-async def analyze_sign_sequence(video: UploadFile = File(...)):
-    return await _handle_video_upload(
-        video,
-        video_analysis_service.analyze_sequence,
-    )
-
-
-async def _handle_video_upload(video, analyze_method):
+async def _handle_video_upload(video):
     filename = video.filename or ""
     extension = Path(filename).suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
@@ -110,7 +99,7 @@ async def _handle_video_upload(video, analyze_method):
             raise HTTPException(status_code=400, detail="빈 영상 파일입니다.")
 
         try:
-            return analyze_method(temporary_path)
+            return video_analysis_service.analyze(temporary_path)
         except ValueError as error:
             print(f"[영상 분석 실패] {error}")
             raise HTTPException(status_code=422, detail=str(error)) from error

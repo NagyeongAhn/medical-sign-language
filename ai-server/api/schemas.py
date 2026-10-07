@@ -17,7 +17,7 @@ class WordsResponse(BaseModel):
     words: list[WordResponse]
 
 
-class AnalysisResponse(BaseModel):
+class AnalysisWordResponse(BaseModel):
     wordId: Optional[str]
     wordLabel: str
     distance: float
@@ -25,13 +25,13 @@ class AnalysisResponse(BaseModel):
     frameCount: int
 
 
-class SequenceWordResponse(AnalysisResponse):
+class TimedWordResponse(AnalysisWordResponse):
     segmentIndex: int
     startMs: int
     endMs: int
 
 
-class SequenceAnalysisResponse(BaseModel):
-    words: list[SequenceWordResponse]
+class AnalysisResponse(BaseModel):
+    words: list[TimedWordResponse]
     segmentCount: int
     frameCount: int

@@ -10,13 +10,14 @@ from services.word_catalog import load_word_definitions
 
 
 WORD_DEFINITIONS = load_word_definitions()
+SIGNER_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,32}")
 
 
 class RecordingService:
     def __init__(self, recordings_directory, signer_id=None):
         self.recordings_directory = Path(recordings_directory)
         self.signer_id = signer_id or os.getenv("SIGNER_ID") or f"anon_{uuid4().hex[:8]}"
-        if not re.fullmatch(r"[A-Za-z0-9_-]{1,32}", self.signer_id):
+        if not SIGNER_ID_PATTERN.fullmatch(self.signer_id):
             raise ValueError("SIGNER_ID는 영문, 숫자, 밑줄, 하이픈으로 된 1~32자여야 합니다.")
         self.active_word = None
         self.test_mode = False

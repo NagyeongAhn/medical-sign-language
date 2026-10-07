@@ -293,45 +293,6 @@ main {
 .step-number.blue { background: var(--accent-blue-soft); }
 .step-number.deep-blue { background: var(--accent-blue); }
 
-.mode-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-bottom: 12px;
-  padding: 5px;
-  border-radius: 999px;
-  background: #edf5ff;
-}
-
-.mode-switch button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: #71828c;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.mode-switch button span {
-  font-size: 9px;
-  font-weight: 650;
-  opacity: 0.72;
-}
-
-.mode-switch button.is-active {
-  color: var(--primary);
-  border-color: rgba(63, 117, 157, 0.1);
-  background: white;
-  box-shadow: 0 7px 20px rgba(54, 87, 108, 0.1);
-}
-
-.mode-switch button:disabled { cursor: not-allowed; }
-
 .camera-frame {
   position: relative;
   aspect-ratio: 16 / 10;
@@ -593,8 +554,7 @@ main {
 }
 
 .result-kicker { margin: 0 0 4px; color: var(--primary); font-size: 10px; font-weight: 850; }
-.result-word { color: var(--ink); font-size: 30px; letter-spacing: -0.055em; }
-.result-word.is-sequence { font-size: 20px; line-height: 1.42; letter-spacing: -0.04em; }
+.result-word { color: var(--ink); font-size: 20px; line-height: 1.42; letter-spacing: -0.04em; }
 
 .text-button {
   align-self: flex-start;
@@ -1026,22 +986,6 @@ footer span { font-weight: 750; }
 
 .step-number { width: 48px; height: 48px; font-size: 13px; }
 
-.mode-switch {
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto 18px;
-  padding: 6px;
-  border: 1px solid rgba(47, 128, 184, 0.08);
-  border-radius: 16px;
-}
-
-.mode-switch button {
-  min-height: 46px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-}
-.mode-switch button span { font-size: 11px; }
 .camera-frame {
   width: 100%;
   max-width: 860px;
@@ -1123,8 +1067,7 @@ footer span { font-weight: 750; }
 .empty-result p,
 .analyzing-state p { margin-top: 7px; font-size: 13px; }
 .result-kicker { margin-bottom: 6px; font-size: 13px; }
-.result-word { font-size: 40px; }
-.result-word.is-sequence { font-size: 27px; }
+.result-word { font-size: 27px; }
 .text-button { font-size: 12px; }
 
 .word-list {
@@ -1217,7 +1160,6 @@ footer span { font-weight: 750; }
 
   .panel-heading h3 { font-size: 17px; }
   .panel-heading p { font-size: 12px; }
-  .mode-switch button { flex-direction: column; gap: 1px; padding: 8px 5px; }
   .camera-frame { aspect-ratio: 1 / 1; border-radius: 18px; }
   .camera-guide { inset: 24px; }
   .body-guide { width: 75%; height: 68%; }

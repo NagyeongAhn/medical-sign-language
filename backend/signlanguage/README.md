@@ -59,6 +59,21 @@ curl http://localhost:8080/api/sign-words
 
 Python 분석 서버는 시작할 때 이 API에서 단어 목록을 동기화한다.
 
+## 단어 사전 추가
+
+이미 적용된 `V3__create_sign_word_dictionary.sql`을 수정하지 않고,
+`src/main/resources/db/migration/`에 다음 버전의 SQL 파일을 만든다.
+예를 들어 `V4__add_head_sign_word.sql`은 `head`(머리)를 `BODY_PART`
+분류와 촬영 키 `6`으로 추가한다. `word_id`, `recording_key`,
+`display_order`는 각각 중복되면 안 된다.
+
+MySQL을 실행한 뒤 Spring Boot를 재시작하면 Flyway가 새 파일을 한 번
+적용한다. `curl http://localhost:8080/api/sign-words` 응답에 새 단어가
+나오는지 확인하고, AI 촬영 프로그램도 다시 시작한다. 다른 컴퓨터에서
+백엔드 없이 `ai-server`만으로 촬영할 단어라면
+`ai-server/services/word_catalog.py`의 기본 목록에도 같은 키와 단어를
+추가해 GitHub에 함께 올린다.
+
 ## 영상 업로드
 
 지원 형식은 MP4, MOV, WEBM이며 최대 크기는 500MB다.

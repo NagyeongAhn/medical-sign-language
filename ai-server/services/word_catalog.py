@@ -11,6 +11,7 @@ DEFAULT_WORD_DEFINITIONS = {
     "3": {"wordId": "medicine", "wordLabel": "약"},
     "4": {"wordId": "doctor", "wordLabel": "의사"},
     "5": {"wordId": "help", "wordLabel": "도와주세요"},
+    "6": {"wordId": "head", "wordLabel": "머리"},
 }
 
 DEFAULT_SIGN_WORD_API_URL = "http://localhost:8080/api/sign-words"

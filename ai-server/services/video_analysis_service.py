@@ -2,7 +2,6 @@ from pathlib import Path
 
 import cv2
 
-from comparison.motion_segmenter import segment_by_motion
 from models.frame_data import build_frame_data
 from trackers.face_tracker import FaceTracker
 from trackers.hand_tracker import HandTracker
@@ -16,44 +15,11 @@ class VideoAnalysisService:
     def analyze(self, video_path):
         frames = self.extract_frames(video_path)
         self._validate_frames(frames)
-        result = self._match_frames(frames)
-        return {
-            **result,
-            "frameCount": len(frames),
-        }
-
-    def analyze_sequence(self, video_path):
-        frames = self.extract_frames(video_path)
-        self._validate_frames(frames)
-        segments = segment_by_motion(frames)
-        if not segments:
-            raise ValueError(
-                "단어 구간을 찾지 못했습니다. 단어 사이에 손을 약 1.5초 멈춰주세요."
-            )
-
-        words = []
-        for segment_index, segment in enumerate(segments):
-            try:
-                result = self._match_frames(segment)
-            except ValueError:
-                continue
-
-            words.append(
-                {
-                    **result,
-                    "segmentIndex": segment_index,
-                    "startMs": segment[0]["timestampMs"],
-                    "endMs": segment[-1]["timestampMs"],
-                    "frameCount": len(segment),
-                }
-            )
-
-        if not words:
-            raise ValueError("분리된 구간에서 인식 가능한 수어를 찾지 못했습니다.")
+        words = self.sign_matcher.match_frames(frames)
 
         return {
             "words": words,
-            "segmentCount": len(segments),
+            "segmentCount": len(words),
             "frameCount": len(frames),
         }
 
@@ -135,20 +101,3 @@ class VideoAnalysisService:
                 f"(분석 프레임: {len(frames)}, 손 감지: {hand_frame_count}, "
                 f"상체 감지: {body_frame_count})"
             )
-
-    def _match_frames(self, frames):
-        recording = {
-            "wordId": None,
-            "wordLabel": None,
-            "sampleId": "api-upload",
-            "durationMs": frames[-1]["timestampMs"] - frames[0]["timestampMs"],
-            "frameCount": len(frames),
-            "frames": frames,
-        }
-        result = self.sign_matcher.match_recording(recording)
-        return {
-            "wordId": result["wordId"],
-            "wordLabel": result["wordLabel"],
-            "distance": result["distance"],
-            "confidence": result["confidence"],
-        }

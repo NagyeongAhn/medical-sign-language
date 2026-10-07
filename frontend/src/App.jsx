@@ -34,7 +34,6 @@ function App() {
   const [cameraState, setCameraState] = useState('loading')
   const [apiConnected, setApiConnected] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
-  const [captureMode, setCaptureMode] = useState('single')
   const [isRecording, setIsRecording] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
@@ -89,7 +88,7 @@ function App() {
     }
   }, [connectCamera, hasStarted])
 
-  const analyzeVideo = async (videoBlob, mimeType, mode) => {
+  const analyzeVideo = async (videoBlob, mimeType) => {
     setIsAnalyzing(true)
     setErrorMessage('')
     setActiveStep('review')
@@ -100,11 +99,7 @@ function App() {
     formData.append('video', videoBlob, `sign.${extension}`)
 
     try {
-      const endpoint =
-        mode === 'sequence'
-          ? '/api/sign/analyze-sequence'
-          : '/api/sign/analyze'
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/api/sign/analyze`, {
         method: 'POST',
         body: formData,
         signal: requestControllerRef.current.signal,
@@ -118,56 +113,30 @@ function App() {
       setApiConnected(true)
       setTranslationResult(null)
       setTranslationError('')
-      if (mode === 'sequence') {
-        const recognizedWords = data.words.filter((word) => word.wordId)
-
-        if (data.segmentCount === 1) {
-          setErrorMessage(
-            '영상에서 동작 구간을 하나만 찾았습니다. 단어 사이에 손을 완전히 멈춘 뒤 다시 촬영해주세요.',
-          )
-        } else if (recognizedWords.length < data.segmentCount) {
-          setErrorMessage(
-            `동작 구간 ${data.segmentCount}개 중 ${recognizedWords.length}개만 인식했습니다. 각 수어를 한 단어씩 다시 확인해주세요.`,
-          )
-        }
-
-        setResult({
-          wordId: recognizedWords.length > 0 ? 'sequence' : null,
-          wordLabel:
-            data.words.map((word) => word.wordLabel).join(' · ') ||
-            '인식할 수 없음',
-          isSequence: true,
-        })
-        setWords((currentWords) => {
-          const remainingCount = MAX_WORDS - currentWords.length
-          const newWords = recognizedWords
-            .slice(0, remainingCount)
-            .map((word, index) => ({
-              id: `${word.wordId}-${Date.now()}-${index}`,
-              wordId: word.wordId,
-              label: word.wordLabel,
-              confidence: word.confidence,
-            }))
-          return [...currentWords, ...newWords]
-        })
-      } else {
-        setResult(data)
+      const recognizedWords = data.words.filter((word) => word.wordId)
+      if (recognizedWords.length === 0) {
+        setErrorMessage('인식된 수어가 없습니다. 기준 샘플과 촬영 상태를 확인해주세요.')
+      } else if (recognizedWords.length < data.segmentCount) {
+        setErrorMessage(
+          `분석한 구간 ${data.segmentCount}개 중 ${recognizedWords.length}개만 인식했습니다. 결과를 확인해주세요.`,
+        )
       }
-
-      if (mode === 'single' && data.wordId) {
-        setWords((currentWords) => {
-          if (currentWords.length >= MAX_WORDS) return currentWords
-          return [
-            ...currentWords,
-            {
-              id: `${data.wordId}-${Date.now()}`,
-              wordId: data.wordId,
-              label: data.wordLabel,
-              confidence: data.confidence,
-            },
-          ]
-        })
-      }
+      setResult({
+        isUnknown: recognizedWords.length === 0,
+        wordLabel: data.words.map((word) => word.wordLabel).join(' · ') || '인식할 수 없음',
+      })
+      setWords((currentWords) => {
+        const remainingCount = MAX_WORDS - currentWords.length
+        const newWords = recognizedWords
+          .slice(0, remainingCount)
+          .map((word, index) => ({
+            id: `${word.wordId}-${Date.now()}-${index}`,
+            wordId: word.wordId,
+            label: word.wordLabel,
+            confidence: word.confidence,
+          }))
+        return [...currentWords, ...newWords]
+      })
     } catch (error) {
       if (error.name === 'AbortError') return
       if (error.message === 'Failed to fetch') {
@@ -211,7 +180,7 @@ function App() {
         blob: videoBlob,
         extension: videoBlob.type.startsWith('video/mp4') ? 'mp4' : 'webm',
       })
-      analyzeVideo(videoBlob, mimeType || videoBlob.type, captureMode)
+      analyzeVideo(videoBlob, mimeType || videoBlob.type)
     }
 
     setResult(null)
@@ -423,27 +392,6 @@ function App() {
                   </div>
                 </div>
 
-                <div className="mode-switch" aria-label="촬영 모드">
-                  <button
-                    type="button"
-                    className={captureMode === 'single' ? 'is-active' : ''}
-                    onClick={() => setCaptureMode('single')}
-                    disabled={isRecording || isAnalyzing}
-                  >
-                    한 단어
-                    <span>정확하게 한 개씩</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={captureMode === 'sequence' ? 'is-active' : ''}
-                    onClick={() => setCaptureMode('sequence')}
-                    disabled={isRecording || isAnalyzing}
-                  >
-                    연속 단어
-                    <span>사이에 1.5초 정지</span>
-                  </button>
-                </div>
-
                 <div className={`camera-frame ${isRecording ? 'is-recording' : ''}`}>
                   <video ref={videoRef} autoPlay muted playsInline />
 
@@ -500,11 +448,7 @@ function App() {
                       disabled={cameraState !== 'ready' || isAnalyzing}
                     >
                       <span className="button-record-icon" />
-                      {isAnalyzing
-                        ? '분석 중...'
-                        : captureMode === 'sequence'
-                          ? '연속 촬영 시작'
-                          : '촬영 시작'}
+                      {isAnalyzing ? '분석 중...' : '촬영 시작'}
                     </button>
                   ) : (
                     <button
@@ -516,11 +460,7 @@ function App() {
                       촬영 종료 및 분석
                     </button>
                   )}
-                  <p>
-                    {captureMode === 'sequence'
-                      ? '단어 사이에 손을 약 1.5초 멈춰주세요.'
-                      : '한 단어를 천천히 표현한 뒤 촬영을 종료해주세요.'}
-                  </p>
+                  <p>한 단어 또는 여러 단어를 표현한 뒤 촬영을 종료해주세요.</p>
                 </div>
               </section>
 
@@ -544,9 +484,7 @@ function App() {
                   </div>
 
                   <div
-                    className={`result-content ${
-                      result?.wordId === null ? 'is-unknown' : ''
-                    }`}
+                    className={`result-content ${result?.isUnknown ? 'is-unknown' : ''}`}
                   >
                     {isAnalyzing ? (
                       <div className="analyzing-state">
@@ -557,13 +495,9 @@ function App() {
                     ) : result ? (
                       <>
                         <p className="result-kicker">
-                          {result.wordId ? '인식된 단어' : '다시 촬영해주세요'}
+                          {result.isUnknown ? '다시 촬영해주세요' : '인식 결과'}
                         </p>
-                        <strong
-                          className={`result-word ${
-                            result.isSequence ? 'is-sequence' : ''
-                          }`}
-                        >
+                        <strong className="result-word">
                           {result.wordLabel}
                         </strong>
                         <button
@@ -726,11 +660,7 @@ function App() {
             <ul>
               <li>밝은 곳에서 카메라 정면을 바라봐주세요.</li>
               <li>얼굴, 상체와 양손이 모두 보이게 해주세요.</li>
-              <li>
-                {captureMode === 'sequence'
-                  ? '단어 사이마다 손을 약 1.5초 멈춰 구분해주세요.'
-                  : '한 번 촬영할 때 한 단어만 표현해주세요.'}
-              </li>
+              <li>단어 사이에 일부러 멈추지 않아도 됩니다.</li>
             </ul>
           </aside>
         </section>

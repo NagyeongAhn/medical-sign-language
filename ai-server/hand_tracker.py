@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 
@@ -5,18 +6,45 @@ import cv2
 
 from comparison.sign_matcher import SignMatcher
 from models.frame_data import build_frame_data
-from services.recording_service import RecordingService, WORD_DEFINITIONS
+from services.recording_service import (
+    RecordingService,
+    SIGNER_ID_PATTERN,
+    WORD_DEFINITIONS,
+)
 from trackers.face_tracker import FaceTracker
 from trackers.hand_tracker import HandTracker
 from trackers.pose_tracker import PoseTracker
 
 
+def prompt_signer_id():
+    default_id = os.getenv("SIGNER_ID", "")
+    suffix = f" [기본값: {default_id}]" if default_id else ""
+    print("촬영자 코드는 영문, 숫자, 밑줄, 하이픈 1~32자입니다. (예: p01)")
+    print("이름, 학번 등 개인 식별 정보는 사용하지 마세요.")
+    while True:
+        signer_id = input(f"촬영자 코드를 입력하세요{suffix}: ").strip() or default_id
+        if SIGNER_ID_PATTERN.fullmatch(signer_id):
+            return signer_id
+        print("[안내] 올바른 촬영자 코드를 입력하세요.")
+
+
+def count_saved_samples(recordings_directory, signer_id):
+    counts = {}
+    for word in WORD_DEFINITIONS.values():
+        word_directory = recordings_directory / word["wordId"]
+        counts[word["wordId"]] = len(
+            list(word_directory.glob(f"sample_{signer_id}_*.json"))
+        )
+    return counts
+
+
 def main():
+    recordings_directory = Path(__file__).parent / "recordings"
+    signer_id = prompt_signer_id()
     hand_tracker = HandTracker()
     pose_tracker = PoseTracker()
     face_tracker = FaceTracker()
-    recordings_directory = Path(__file__).parent / "recordings"
-    recording_service = RecordingService(recordings_directory)
+    recording_service = RecordingService(recordings_directory, signer_id)
     sign_matcher = SignMatcher(recordings_directory)
     reference_count = sign_matcher.load_references()
     cap = cv2.VideoCapture(0)
@@ -95,6 +123,17 @@ def main():
                 cv2.LINE_AA,
             )
 
+            cv2.putText(
+                image,
+                f"SIGNER: {recording_service.signer_id}",
+                (30, 140),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
             if recording_service.is_recording:
                 if recording_service.is_test_recording:
                     recording_label = "TEST"
@@ -165,6 +204,17 @@ def main():
                     saved_path = recording_service.stop_and_save()
                     if saved_path:
                         print(f"[저장 완료] {saved_path}")
+                        saved_counts = count_saved_samples(
+                            recordings_directory,
+                            recording_service.signer_id,
+                        )
+                        print(
+                            f"[{recording_service.signer_id} 누적] "
+                            + " | ".join(
+                                f'{word["wordLabel"]} {saved_counts[word["wordId"]]}개'
+                                for word in WORD_DEFINITIONS.values()
+                            )
+                        )
                     else:
                         print("[안내] 저장할 촬영 데이터가 없습니다.")
             elif key_character.lower() == "q":
