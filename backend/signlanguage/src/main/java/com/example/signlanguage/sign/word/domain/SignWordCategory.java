@@ -9,6 +9,7 @@ public enum SignWordCategory {
     ACTION,
     REQUEST,
     QUESTION,
+    ANSWER,
     NEGATION,
     TIME,
     OTHER

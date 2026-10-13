@@ -1,7 +1,272 @@
 [
-  {"recordingKey": "1", "wordId": "hospital", "wordLabel": "병원"},
-  {"recordingKey": "2", "wordId": "sick", "wordLabel": "아프다"},
-  {"recordingKey": "3", "wordId": "medicine", "wordLabel": "약"},
-  {"recordingKey": "4", "wordId": "doctor", "wordLabel": "의사"},
-  {"recordingKey": "5", "wordId": "help", "wordLabel": "도와주세요"}
+  {
+    "recordingKey": "1",
+    "wordId": "hospital",
+    "wordLabel": "병원"
+  },
+  {
+    "recordingKey": "2",
+    "wordId": "sick",
+    "wordLabel": "아프다"
+  },
+  {
+    "recordingKey": "3",
+    "wordId": "medicine",
+    "wordLabel": "약"
+  },
+  {
+    "recordingKey": "4",
+    "wordId": "doctor",
+    "wordLabel": "의사"
+  },
+  {
+    "recordingKey": "5",
+    "wordId": "help",
+    "wordLabel": "도와주세요"
+  },
+  {
+    "recordingKey": "6",
+    "wordId": "head",
+    "wordLabel": "머리"
+  },
+  {
+    "recordingKey": "7",
+    "wordId": "neck",
+    "wordLabel": "목"
+  },
+  {
+    "recordingKey": "8",
+    "wordId": "chest",
+    "wordLabel": "가슴"
+  },
+  {
+    "recordingKey": "9",
+    "wordId": "abdomen",
+    "wordLabel": "배"
+  },
+  {
+    "recordingKey": "a",
+    "wordId": "waist",
+    "wordLabel": "허리"
+  },
+  {
+    "recordingKey": "b",
+    "wordId": "arm",
+    "wordLabel": "팔"
+  },
+  {
+    "recordingKey": "c",
+    "wordId": "leg",
+    "wordLabel": "다리"
+  },
+  {
+    "recordingKey": "d",
+    "wordId": "eye",
+    "wordLabel": "눈"
+  },
+  {
+    "recordingKey": "e",
+    "wordId": "ear",
+    "wordLabel": "귀"
+  },
+  {
+    "recordingKey": "f",
+    "wordId": "hand",
+    "wordLabel": "손"
+  },
+  {
+    "recordingKey": "g",
+    "wordId": "foot",
+    "wordLabel": "발"
+  },
+  {
+    "recordingKey": "h",
+    "wordId": "back",
+    "wordLabel": "등"
+  },
+  {
+    "recordingKey": "i",
+    "wordId": "left",
+    "wordLabel": "왼쪽"
+  },
+  {
+    "recordingKey": "j",
+    "wordId": "right",
+    "wordLabel": "오른쪽"
+  },
+  {
+    "recordingKey": "k",
+    "wordId": "fever",
+    "wordLabel": "열"
+  },
+  {
+    "recordingKey": "l",
+    "wordId": "cough",
+    "wordLabel": "기침"
+  },
+  {
+    "recordingKey": "m",
+    "wordId": "vomit",
+    "wordLabel": "토하다"
+  },
+  {
+    "recordingKey": "n",
+    "wordId": "diarrhea",
+    "wordLabel": "설사"
+  },
+  {
+    "recordingKey": "o",
+    "wordId": "dizzy",
+    "wordLabel": "어지럽다"
+  },
+  {
+    "recordingKey": "p",
+    "wordId": "itchy",
+    "wordLabel": "가렵다"
+  },
+  {
+    "recordingKey": "q",
+    "wordId": "nauseous",
+    "wordLabel": "메스껍다"
+  },
+  {
+    "recordingKey": "r",
+    "wordId": "short_of_breath",
+    "wordLabel": "숨쉬기 어렵다"
+  },
+  {
+    "recordingKey": "s",
+    "wordId": "blood",
+    "wordLabel": "피"
+  },
+  {
+    "recordingKey": "t",
+    "wordId": "injured",
+    "wordLabel": "다치다"
+  },
+  {
+    "recordingKey": "u",
+    "wordId": "fainted",
+    "wordLabel": "쓰러지다"
+  },
+  {
+    "recordingKey": "v",
+    "wordId": "swollen",
+    "wordLabel": "붓다"
+  },
+  {
+    "recordingKey": "w",
+    "wordId": "allergy",
+    "wordLabel": "알레르기"
+  },
+  {
+    "recordingKey": "x",
+    "wordId": "today",
+    "wordLabel": "오늘"
+  },
+  {
+    "recordingKey": "y",
+    "wordId": "yesterday",
+    "wordLabel": "어제"
+  },
+  {
+    "recordingKey": "z",
+    "wordId": "continuous",
+    "wordLabel": "계속"
+  },
+  {
+    "recordingKey": "A",
+    "wordId": "just_now",
+    "wordLabel": "방금"
+  },
+  {
+    "recordingKey": "B",
+    "wordId": "several_days",
+    "wordLabel": "며칠"
+  },
+  {
+    "recordingKey": "C",
+    "wordId": "suddenly",
+    "wordLabel": "갑자기"
+  },
+  {
+    "recordingKey": "D",
+    "wordId": "sometimes",
+    "wordLabel": "가끔"
+  },
+  {
+    "recordingKey": "E",
+    "wordId": "a_lot",
+    "wordLabel": "많이"
+  },
+  {
+    "recordingKey": "F",
+    "wordId": "severe",
+    "wordLabel": "심하다"
+  },
+  {
+    "recordingKey": "G",
+    "wordId": "a_little",
+    "wordLabel": "조금"
+  },
+  {
+    "recordingKey": "H",
+    "wordId": "worsening",
+    "wordLabel": "더 심해지다"
+  },
+  {
+    "recordingKey": "I",
+    "wordId": "improving",
+    "wordLabel": "나아지다"
+  },
+  {
+    "recordingKey": "J",
+    "wordId": "yes",
+    "wordLabel": "네"
+  },
+  {
+    "recordingKey": "K",
+    "wordId": "no",
+    "wordLabel": "아니요"
+  },
+  {
+    "recordingKey": "L",
+    "wordId": "pregnancy",
+    "wordLabel": "임신"
+  },
+  {
+    "recordingKey": "M",
+    "wordId": "surgery_history",
+    "wordLabel": "수술한 적 있다"
+  },
+  {
+    "recordingKey": "N",
+    "wordId": "taking_medicine",
+    "wordLabel": "약을 먹고 있다"
+  },
+  {
+    "recordingKey": "O",
+    "wordId": "dont_know",
+    "wordLabel": "모르겠다"
+  },
+  {
+    "recordingKey": "P",
+    "wordId": "again",
+    "wordLabel": "다시"
+  },
+  {
+    "recordingKey": "Q",
+    "wordId": "slowly",
+    "wordLabel": "천천히"
+  },
+  {
+    "recordingKey": "R",
+    "wordId": "interpreter",
+    "wordLabel": "통역"
+  },
+  {
+    "recordingKey": "S",
+    "wordId": "guardian",
+    "wordLabel": "보호자"
+  }
 ]

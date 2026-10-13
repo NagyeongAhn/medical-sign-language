@@ -58,6 +58,7 @@ public class GeminiSentenceGenerator implements SentenceGenerator {
             case ACTION -> "행동";
             case REQUEST -> "요청";
             case QUESTION -> "질문";
+            case ANSWER -> "응답";
             case NEGATION -> "부정";
             case TIME -> "시간";
             case OTHER -> "기타";

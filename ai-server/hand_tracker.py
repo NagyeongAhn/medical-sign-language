@@ -63,14 +63,15 @@ def main():
             f'{skipped["reason"]}'
         )
     print("양손과 상체, 얼굴 핵심 좌표를 인식합니다.")
-    word_menu = " | ".join(
+    word_menu = [
         f'{key}: {word["wordLabel"]}'
         for key, word in WORD_DEFINITIONS.items()
-    )
-    print(word_menu)
-    print("숫자 키로 촬영 시작 | Space: 촬영 종료 및 JSON 저장")
-    print("R: 테스트 촬영 시작 | Space: 촬영 종료 및 즉시 분석")
-    print("종료하려면 웹캠 창을 클릭한 후 'q'를 누르세요.")
+    ]
+    for start in range(0, len(word_menu), 4):
+        print(" | ".join(word_menu[start:start + 4]))
+    print("표시된 키: 촬영 시작 | Space: 촬영 종료 및 JSON 저장")
+    print("0: 테스트 촬영 시작 | Space: 촬영 종료 및 즉시 분석")
+    print("종료하려면 웹캠 창을 클릭한 후 Esc를 누르세요.")
 
     try:
         while cap.isOpened():
@@ -173,7 +174,7 @@ def main():
                     print(f'[촬영 시작] {word["wordLabel"]} ({word["wordId"]})')
                 else:
                     print("[안내] 진행 중인 촬영을 Space로 먼저 저장하세요.")
-            elif key_character.lower() == "r":
+            elif key_character == "0":
                 if recording_service.start_test():
                     analysis_result_text = ""
                     print("[테스트 촬영 시작] 수어를 한 뒤 Space를 누르세요.")
@@ -217,7 +218,7 @@ def main():
                         )
                     else:
                         print("[안내] 저장할 촬영 데이터가 없습니다.")
-            elif key_character.lower() == "q":
+            elif key == 27:
                 break
     finally:
         cap.release()
